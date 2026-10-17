@@ -1,17 +1,86 @@
 # mdCIF-server
 
 A small web app for making [mdcif](../mdcif) files from your MD simulations, from the browser.
-Give it a topology and one or more trajectories (upload them, or pick files already on
-`/blue`), choose the build options, fill in the provenance form, and download a validated
-`.cif` / `.bcif` with its summary, landscape plot, 3D view of the models, `provenance.yaml` and
-the equivalent `mdcif build` command, which rebuilds exactly the same file with the job's own
+Give it a topology and one or more trajectories (upload them, or pick files already on the
+computer that runs the server), choose the build options, fill in the provenance form, and
+download a validated `.cif` / `.bcif` with its summary, landscape plot, 3D view of the models,
+`provenance.yaml` and the equivalent `mdcif build` command, which rebuilds exactly the same file
+with the job's own
 `provenance.yaml` (the server tidies a loosely written provenance first: it strips spaces around
 text, turns a single author into a list and reads quoted numbers as numbers).
 
-It runs on a HiPerGator compute node and only you can open it: it listens on `127.0.0.1` and
-asks for a secret token that is printed when it starts.
+It runs on your own computer or on a HiPerGator compute node, and only you can open it: it
+listens on `127.0.0.1` and asks for a secret token that is printed when it starts.
 
-## Start it on HiPerGator
+## Run it on your own computer (Ubuntu, macOS, Windows)
+
+So far the server has only been run on Linux (HiPerGator). The steps are the same on Ubuntu and
+macOS; Windows has not been tried yet.
+
+### 1. Install (once)
+
+1. Install **Miniforge** (conda and mamba from conda-forge):
+   <https://github.com/conda-forge/miniforge>.
+   - Ubuntu / macOS: download the installer for your system, run
+     `bash Miniforge3-<your system>.sh`, and open a new terminal.
+   - Windows: run the Windows installer, then use the **Miniforge Prompt** from the Start menu
+     for every command below.
+2. Put the two folders side by side: `mdcif` (the mdcif package) and `mdcif-server` (this
+   folder).
+3. From the folder that holds them, create the environment and install both packages:
+
+   ```bash
+   mamba create -n mdcif -c conda-forge python=3.11 numpy scipy "mdanalysis>=2.8" \
+       "scikit-learn>=1.3" "ihm>=2.0" gemmi pyyaml typer matplotlib fastapi uvicorn
+   conda activate mdcif
+   pip install -e ./mdcif --no-deps
+   pip install -e ./mdcif-server --no-deps
+   ```
+
+   On Windows, type the `mamba create` command on one line, without the `\`. Always use
+   `--no-deps`: conda provides every dependency, and pip must not replace them.
+
+### 2. Start it
+
+```bash
+conda activate mdcif
+mdcif-server --allow-root ~ --data-dir ~/mdcif-server-data
+```
+
+- `--allow-root ~` lets the **Server path** option and its **Browse** dialog use the files in
+  your home folder. Give it the folder that holds your trajectories; repeat it to allow
+  several. Uploads work from anywhere.
+- `--data-dir` is where uploads and results are kept.
+- If port 8765 is taken, add `--port 8790` (any free port), or `--port 0` to pick one.
+
+It prints a line like this:
+
+```
+mdcif-server URL: http://127.0.0.1:8765/?token=...
+```
+
+Open that link in a browser on the same computer; no tunnel is needed. After the first visit
+`http://127.0.0.1:8765/` is enough until the server restarts. **Ctrl-C** in the terminal stops
+it.
+
+The computer needs internet for three things: the 3D view (3Dmol.js comes from
+`cdn.jsdelivr.net`), the first validation (mdcif downloads the PDBx/IHM dictionaries once,
+into `~/.cache/mdcif`), and references given as a PDB ID (downloaded from RCSB).
+
+### 3. Try it with test data (optional)
+
+MDAnalysis' test files include a small trajectory of adenylate kinase (AdK, 98 frames):
+
+```bash
+mamba install -n mdcif -c conda-forge mdanalysistests
+python -c "import MDAnalysisTests.datafiles as d; print(d.PSF); print(d.DCD)"
+```
+
+Miniforge installs into your home folder, so with `--allow-root ~` you can give these two paths
+as **Server path** (or upload the two files). Use them as topology and trajectory, set
+**Smallest cluster** to `5`, and press **Start build**. It takes a few seconds.
+
+## Run it on HiPerGator
 
 1. On the login node, from this folder:
 
@@ -78,7 +147,8 @@ For short test trajectories (under a few thousand frames) lower **Smallest clust
 (`min_cluster_size`). The default (1% of the frames, at least 25) finds no clusters in, e.g.,
 the 98-frame AdK test run; use 5 there.
 
-Files are kept in the data dir (`data/` in this folder for `scripts/start_hpg.sh`):
+Files are kept in the data dir (`--data-dir`; by default `mdcif-server-data/` in the folder you
+start the server from, and `data/` in this folder for `scripts/start_hpg.sh`):
 - `uploads/` holds the uploaded files;
 - `jobs/` has one folder per job, with its outputs and its own link to its uploaded inputs.
 
@@ -87,9 +157,10 @@ clear its file in the form, or use **Clear form**. A job never depends on `uploa
 own copy. The files get your usual permissions: whoever can read your other files on `/blue`
 (e.g. your group) can read them too. The token protects the web page, not the files.
 
-## Run it elsewhere
+## Start it by hand on HiPerGator
 
-On any machine with the `mdcif` conda env (on the login node only for small tests such as AdK):
+On any HiPerGator node with the `mdcif` conda env (on the login node only for small tests such
+as AdK):
 
 ```bash
 PYTHONPATH=src /blue/alberto.perezant/t.desilva/conda/envs/mdcif/bin/python -m mdcif_server \
@@ -105,7 +176,7 @@ PYTHONPATH=src /blue/alberto.perezant/t.desilva/conda/envs/mdcif/bin/python -m m
   `--workers`).
 - `scripts/start_hpg.sh --here` runs it on the current node, e.g. inside an `salloc` session.
 
-## Requirements
+## Requirements on HiPerGator
 
 - The `mdcif` conda env (mdcif's `environment.yml`), with the `mdcif` package installed in it
   (`pip install -e . --no-deps` in the mdcif folder).
