@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:,">
+  <title>mdcif server</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script type="module" src="/static/app.js"></script>
+</head>
+<body data-route="new" data-ready="0">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/new"><span class="brand-mark" aria-hidden="true"></span>mdcif <span class="brand-sub">server</span></a>
+      <nav aria-label="Main">
+        <a href="#/new" data-nav="new">New job</a>
+        <a href="#/jobs" data-nav="jobs">Jobs</a>
+      </nav>
+      <p class="server-meta" id="server-meta"></p>
+    </div>
+  </header>
+  <main id="main" tabindex="-1">
+    <p class="muted loading">Loading...</p>
+    <noscript><p class="notice notice-error">This page needs JavaScript.</p></noscript>
+  </main>
+  <footer class="footer">
+    <p>Builds mdcif files (PDBx/mmCIF + IHM + mdcif extension) from MD trajectories with <span class="mono">mdcif build</span>.</p>
+  </footer>
+</body>
+</html>

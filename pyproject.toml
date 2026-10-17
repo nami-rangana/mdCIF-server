@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mdcif-server"
+dynamic = ["version"]
+description = "Local web server that builds validated mdcif files from MD trajectories (HiPerGator)."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+# mdcif itself is not listed: it comes from the conda env (editable install of
+# /blue/alberto.perezant/t.desilva/mdcif), as do numpy, MDAnalysis, matplotlib, ...
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "httpx", "ruff", "websocket-client"]
+
+[project.scripts]
+mdcif-server = "mdcif_server.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "mdcif_server.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mdcif_server = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+# tests/e2e/ needs a running server and Chrome: run it explicitly
+norecursedirs = ["e2e", ".*", "__pycache__"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header",
+    "fastapi.Cookie",
+]
